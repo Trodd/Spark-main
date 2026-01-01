@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Combat Overlay - Name Plates</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: transparent;
+        }
+
+        #combat_container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        .team_container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .team_container.orange {
+            align-items: flex-start;
+        }
+
+        .team_container.blue {
+            align-items: flex-end;
+        }
+
+        .nameplate {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            min-width: 200px;
+            position: relative;
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .nameplate.orange {
+            background: linear-gradient(90deg, rgba(255, 150, 39, 0.9) 0%, rgba(189, 122, 36, 0.7) 100%);
+            border-left: 4px solid #ff9627;
+            box-shadow: 0 4px 12px rgba(255, 150, 39, 0.5);
+        }
+
+        .nameplate.blue {
+            background: linear-gradient(-90deg, rgba(72, 144, 221, 0.9) 0%, rgba(63, 106, 225, 0.7) 100%);
+            border-right: 4px solid #4890dd;
+            box-shadow: 0 4px 12px rgba(72, 144, 221, 0.5);
+            flex-direction: row-reverse;
+        }
+
+        .nameplate.possession {
+            transform: scale(1.05);
+            filter: brightness(1.2);
+        }
+
+        .nameplate.possession::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 8px;
+            animation: pulse 1s ease infinite;
+        }
+
+        .nameplate.orange.possession::before {
+            box-shadow: 0 0 20px rgba(255, 150, 39, 0.8);
+        }
+
+        .nameplate.blue.possession::before {
+            box-shadow: 0 0 20px rgba(72, 144, 221, 0.8);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .nameplate.stunned {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+        }
+
+        .player_name {
+            flex-grow: 1;
+            color: white;
+            z-index: 1;
+        }
+
+        .player_number {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-left: 10px;
+            z-index: 1;
+        }
+
+        .nameplate.blue .player_number {
+            margin-left: 0;
+            margin-right: 10px;
+        }
+
+        .possession_indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+            margin-left: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+
+        .nameplate.blue .possession_indicator {
+            margin-left: 0;
+            margin-right: 10px;
+        }
+
+        .nameplate.possession .possession_indicator {
+            opacity: 1;
+            animation: possessionBlink 0.8s ease infinite;
+        }
+
+        @keyframes possessionBlink {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3);
+            }
+        }
+
+        .stunned_indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: rgba(255, 0, 0, 0.9);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        .nameplate.orange .stunned_indicator {
+            right: auto;
+            left: -5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="combat_container">
+        <div class="team_container orange" id="orange_team"></div>
+        <div class="team_container blue" id="blue_team"></div>
+    </div>
+
+    <script src="/js/spark_websocket.js"></script>
+    <script>
+        const orangeTeamContainer = document.getElementById("orange_team");
+        const blueTeamContainer = document.getElementById("blue_team");
+
+        let lastOrangePlayers = '';
+        let lastBluePlayers = '';
+
+        let sw = new SparkWebsocket();
+
+        sw.subscribe("frame_10hz", data => {
+            if (!data || !data['teams']) return;
+
+            // Get players from both teams
+            const bluePlayers = data['teams'][0]['players'] || [];
+            const orangePlayers = data['teams'][1]['players'] || [];
+
+            // Create unique identifiers for player lists
+            const newBluePlayers = bluePlayers.map(p => p['name'] + p['number']).join(',');
+            const newOrangePlayers = orangePlayers.map(p => p['name'] + p['number']).join(',');
+
+            // Update orange team if changed
+            if (newOrangePlayers !== lastOrangePlayers) {
+                updateTeam(orangePlayers, orangeTeamContainer, 'orange');
+                lastOrangePlayers = newOrangePlayers;
+            } else {
+                updatePlayerStates(orangePlayers, orangeTeamContainer);
+            }
+
+            // Update blue team if changed
+            if (newBluePlayers !== lastBluePlayers) {
+                updateTeam(bluePlayers, blueTeamContainer, 'blue');
+                lastBluePlayers = newBluePlayers;
+            } else {
+                updatePlayerStates(bluePlayers, blueTeamContainer);
+            }
+        });
+
+        function updateTeam(players, container, teamClass) {
+            // Clear container
+            container.innerHTML = '';
+
+            // Create nameplate for each player
+            players.forEach(player => {
+                const nameplate = createNameplate(player, teamClass);
+                container.appendChild(nameplate);
+            });
+        }
+
+        function createNameplate(player, teamClass) {
+            const nameplate = document.createElement('div');
+            nameplate.className = `nameplate ${teamClass}`;
+            nameplate.dataset.playerid = player['userid'] || player['playerid'];
+
+            const possessionIndicator = document.createElement('div');
+            possessionIndicator.className = 'possession_indicator';
+
+            const playerName = document.createElement('div');
+            playerName.className = 'player_name';
+            playerName.textContent = player['name'];
+
+            const playerNumber = document.createElement('div');
+            playerNumber.className = 'player_number';
+            playerNumber.textContent = '#' + player['number'];
+
+            if (teamClass === 'blue') {
+                nameplate.appendChild(playerNumber);
+                nameplate.appendChild(playerName);
+                nameplate.appendChild(possessionIndicator);
+            } else {
+                nameplate.appendChild(possessionIndicator);
+                nameplate.appendChild(playerName);
+                nameplate.appendChild(playerNumber);
+            }
+
+            // Update states
+            updateNameplateState(nameplate, player);
+
+            return nameplate;
+        }
+
+        function updatePlayerStates(players, container) {
+            players.forEach(player => {
+                const playerId = player['userid'] || player['playerid'];
+                const nameplate = container.querySelector(`[data-playerid="${playerId}"]`);
+                if (nameplate) {
+                    updateNameplateState(nameplate, player);
+                }
+            });
+        }
+
+        function updateNameplateState(nameplate, player) {
+            // Update possession
+            if (player['possession']) {
+                nameplate.classList.add('possession');
+            } else {
+                nameplate.classList.remove('possession');
+            }
+
+            // Update stunned
+            if (player['stunned']) {
+                nameplate.classList.add('stunned');
+                if (!nameplate.querySelector('.stunned_indicator')) {
+                    const stunnedIndicator = document.createElement('div');
+                    stunnedIndicator.className = 'stunned_indicator';
+                    stunnedIndicator.textContent = 'STUNNED';
+                    nameplate.appendChild(stunnedIndicator);
+                }
+            } else {
+                nameplate.classList.remove('stunned');
+                const stunnedIndicator = nameplate.querySelector('.stunned_indicator');
+                if (stunnedIndicator) {
+                    stunnedIndicator.remove();
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
