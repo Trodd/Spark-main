@@ -66,6 +66,50 @@
 				</StackPanel>
 			</GroupBox>
 
+			<GroupBox Header="Caster Settings" Margin="0,20,0,0">
+				<StackPanel>
+					<Label Content="Number of Casters" Margin="20,0,0,0"/>
+					<ComboBox x:Name="NumCastersComboBox" Margin="20,0,20,10" SelectionChanged="NumCastersChanged">
+						<ComboBoxItem>1</ComboBoxItem>
+						<ComboBoxItem>2</ComboBoxItem>
+						<ComboBoxItem>3</ComboBoxItem>
+						<ComboBoxItem>4</ComboBoxItem>
+					</ComboBox>
+
+					<StackPanel x:Name="Caster1Panel" Margin="20,10,20,0">
+						<Label Content="Caster 1" FontWeight="Bold"/>
+						<Label Content="Name"/>
+						<TextBox x:Name="Caster1Name" TextChanged="CasterChanged"/>
+						<Label Content="Logo (URL)"/>
+						<TextBox x:Name="Caster1Logo" TextChanged="CasterChanged"/>
+					</StackPanel>
+
+					<StackPanel x:Name="Caster2Panel" Margin="20,10,20,0">
+						<Label Content="Caster 2" FontWeight="Bold"/>
+						<Label Content="Name"/>
+						<TextBox x:Name="Caster2Name" TextChanged="CasterChanged"/>
+						<Label Content="Logo (URL)"/>
+						<TextBox x:Name="Caster2Logo" TextChanged="CasterChanged"/>
+					</StackPanel>
+
+					<StackPanel x:Name="Caster3Panel" Margin="20,10,20,0">
+						<Label Content="Caster 3" FontWeight="Bold"/>
+						<Label Content="Name"/>
+						<TextBox x:Name="Caster3Name" TextChanged="CasterChanged"/>
+						<Label Content="Logo (URL)"/>
+						<TextBox x:Name="Caster3Logo" TextChanged="CasterChanged"/>
+					</StackPanel>
+
+					<StackPanel x:Name="Caster4Panel" Margin="20,10,20,0">
+						<Label Content="Caster 4" FontWeight="Bold"/>
+						<Label Content="Name"/>
+						<TextBox x:Name="Caster4Name" TextChanged="CasterChanged"/>
+						<Label Content="Logo (URL)"/>
+						<TextBox x:Name="Caster4Logo" TextChanged="CasterChanged"/>
+					</StackPanel>
+				</StackPanel>
+			</GroupBox>
+
 		</StackPanel>
 	</ScrollViewer>
 </UserControl>

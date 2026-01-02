@@ -46,59 +46,118 @@ namespace Spark
 				// send the message back
 				socket.OnMessage = message =>
 				{
-					string[] parts = message.Split(':');
+					string[] parts = message.Split(new[] { ':' }, 2); // Split only on first colon
 					if (parts.Length == 2)
 					{
+						Console.WriteLine($"WebSocket message received: {parts[0]}");
 						switch (parts[0])
 						{
 							case "subscribe":
-							{
-								if (Enum.TryParse(parts[1], out EventContainer.EventType type))
 								{
-									if (!subscriberMapping.ContainsKey(type))
+									if (Enum.TryParse(parts[1], out EventContainer.EventType type))
 									{
-										subscriberMapping[type] = new List<IWebSocketConnection>();
-									}
+										if (!subscriberMapping.ContainsKey(type))
+										{
+											subscriberMapping[type] = new List<IWebSocketConnection>();
+										}
 
-									lock (subscriberLock)
-									{
-										subscriberMapping[type].Add(socket);
-									}
-
-									socket.Send(message);
-
-									// send back the current state if it's an event that requires it
-									if (type == EventContainer.EventType.overlay_config)
-									{
-										SendData(EventContainer.EventType.overlay_config, OverlayConfig.ToDict());
-									}
-								}
-								else
-								{
-									socket.Send("failed:" + message);
-								}
-								break;
-							}
-							case "unsubscribe":
-							{
-								if (Enum.TryParse(parts[1], out EventContainer.EventType type))
-								{
-									if (subscriberMapping.ContainsKey(type))
-									{
 										lock (subscriberLock)
 										{
-											subscriberMapping[type].Remove(socket);
+											subscriberMapping[type].Add(socket);
+										}
+
+										socket.Send(message);
+
+										// send back the current state if it's an event that requires it
+										if (type == EventContainer.EventType.overlay_config)
+										{
+											SendData(EventContainer.EventType.overlay_config, OverlayConfig.ToDict());
 										}
 									}
-
-									socket.Send(message);
+									else
+									{
+										socket.Send("failed:" + message);
+									}
+									break;
 								}
-								else
+							case "unsubscribe":
 								{
-									socket.Send("failed:" + message);
+									if (Enum.TryParse(parts[1], out EventContainer.EventType type))
+									{
+										if (subscriberMapping.ContainsKey(type))
+										{
+											lock (subscriberLock)
+											{
+												subscriberMapping[type].Remove(socket);
+											}
+										}
+
+										socket.Send(message);
+									}
+									else
+									{
+										socket.Send("failed:" + message);
+									}
+									break;
 								}
-								break;
-							}
+							case "set_overlay_config":
+								{
+									Console.WriteLine($"=== set_overlay_config received ===");
+									Console.WriteLine($"Raw data: {parts[1]}");
+									try
+									{
+										var config = JsonConvert.DeserializeObject<Dictionary<string, object>>(parts[1]);
+
+										// Update caster preferences if provided
+										if (config != null)
+										{
+											Console.WriteLine($"Config parsed successfully, {config.Count} items");
+											// Clear existing caster prefs
+											SparkSettings.instance.casterPrefs.Clear();
+
+											// Add new values, converting JToken types to proper primitives
+											foreach (var kvp in config)
+											{
+												if (kvp.Value is Newtonsoft.Json.Linq.JValue jValue)
+												{
+													SparkSettings.instance.casterPrefs[kvp.Key] = jValue.Value;
+												}
+												else if (kvp.Value is Newtonsoft.Json.Linq.JToken jToken)
+												{
+													SparkSettings.instance.casterPrefs[kvp.Key] = jToken.ToObject<object>();
+												}
+												else
+												{
+													SparkSettings.instance.casterPrefs[kvp.Key] = kvp.Value;
+												}
+											}
+
+											Console.WriteLine($"Before save - casterPrefs: num_casters={SparkSettings.instance.casterPrefs.GetValueOrDefault("num_casters", "NOT SET")}");
+											SparkSettings.instance.Save();
+											Console.WriteLine($"After save - casterPrefs: num_casters={SparkSettings.instance.casterPrefs.GetValueOrDefault("num_casters", "NOT SET")}");
+											Console.WriteLine($"Caster config updated: {SparkSettings.instance.casterPrefs.Count} items");
+
+											// Broadcast the update
+											var broadcastConfig = OverlayConfig.ToDict();
+											if (broadcastConfig.ContainsKey("caster_prefs") && broadcastConfig["caster_prefs"] is Dictionary<string, object> cp)
+											{
+												Console.WriteLine($"Broadcasting overlay_config with num_casters={cp.GetValueOrDefault("num_casters", "NOT SET")}");
+											}
+											Program.OverlayConfigChanged?.Invoke();
+											socket.Send("success:set_overlay_config");
+										}
+										else
+										{
+											socket.Send("failed:invalid_config");
+										}
+									}
+									catch (Exception ex)
+									{
+										Console.WriteLine($"Error setting overlay config: {ex.Message}");
+										socket.Send("failed:" + ex.Message);
+									}
+									break;
+								}
 						}
 					}
 				};
@@ -135,7 +194,21 @@ namespace Spark
 			};
 			Program.OverlayConfigChanged += () =>
 			{
-				SendData(EventContainer.EventType.overlay_config, OverlayConfig.ToDict());
+				var config = OverlayConfig.ToDict();
+				Console.WriteLine($"OverlayConfigChanged: Broadcasting to WebSocket subscribers");
+				if (config.ContainsKey("caster_prefs"))
+				{
+					var casterPrefs = config["caster_prefs"] as Dictionary<string, object>;
+					if (casterPrefs != null)
+					{
+						Console.WriteLine($"  Caster prefs count: {casterPrefs.Count}");
+						if (casterPrefs.ContainsKey("num_casters"))
+						{
+							Console.WriteLine($"  num_casters: {casterPrefs["num_casters"]}");
+						}
+					}
+				}
+				SendData(EventContainer.EventType.overlay_config, config);
 			};
 			Program.JoinedGame += (frame) =>
 			{

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Spark Overlays</title>
+    <link rel="stylesheet" href="./css/bulma.min.css">
+    <link rel="stylesheet" href="./css/fontawesome-all.min.css">
+    <style>
+        :root {
+            --ignite-orange: #ff6c37;
+            --ignite-blue: #00b8d4;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+        }
+
+        .hero {
+            background-color: #0003;
+            padding: 4rem 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            color: var(--ignite-orange);
+        }
+
+        .content {
+            max-width: 60em;
+            margin: 2em auto;
+            padding: 0 1.5rem;
+        }
+
+        .box {
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        a {
+            color: var(--ignite-blue);
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: var(--ignite-orange);
+        }
+
+        h3 {
+            color: var(--ignite-orange);
+            margin-top: 0.5em;
+            display: inline;
+        }
+
+        .breadcrumb {
+            margin-bottom: 1em;
+        }
+
+        .breadcrumb ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            gap: 0.5em;
+        }
+
+        .breadcrumb li:not(:last-child)::after {
+            content: "›";
+            margin-left: 0.5em;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+    <section class="hero is-medium">
+        <div class="hero-body">
+            <div class="container has-text-centered">
+                <h1>Spark Overlays</h1>
+                <p class="subtitle" style="font-size: 1.2em;">
+                    The overlays provided here are free for non-commercial use <span
+                        style="color: var(--ignite-orange);">with attribution</span>.
+                    If you wish to have a customized set of overlays for your league, contact NtsFranz for more
+                    information.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <div class="content">
+        <nav class="breadcrumb" aria-label="breadcrumbs">
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li class="is-active"><a href="#" aria-current="page">Overlays</a></li>
+            </ul>
+        </nav>
+
+        <div class="box">
+            <p>
+                A scene collection with these overlays has already been added to OBS. You can also add these
+                URLs as browser sources to your streaming software yourself.
+            </p>
+            <ul>
+                <li>
+                    <a href="/branding">
+                        <h3>/branding</h3>
+                    </a>
+                    Several examples of acceptable attribution. You can create your own, or crop one of the examples on
+                    this page.
+                </li>
+                <li>
+                    <a href="/overlays/match_setup">
+                        <h3>/overlays/match_setup</h3>
+                    </a>
+                    Configure team names and logos manually.
+                </li>
+                <li>
+                    <a href="/overlays/caster_setup/">
+                        <h3>/overlays/caster_setup</h3>
+                    </a>
+                    Configure caster names and logos for casting overlays.
+                </li>
+                <li>
+                    <a href="/midmatch_overlay">
+                        <h3>/midmatch_overlay</h3>
+                    </a>
+                    An overlay that covers the default ORANGE TEAM and BLUE TEAM banners with automatically generated
+                    team names from VRML team lists.
+                    Also shows neutral and defensive joust times. Customize the team names and logos in Spark's
+                    Settings->Overlay window.
+                </li>
+                <li>
+                    <a href="http://localhost:6724/scoreboard">
+                        <h3>/scoreboard</h3>
+                    </a>
+                    A recreation of the default scoreboard shown at the end of matches. This includes data for players
+                    that have dropped during the course of the match.
+                </li>
+                <li>
+                    <a href="/configurable_overlay">
+                        <h3>/configurable_overlay</h3>
+                    </a>
+                    A full overlay replacement. Hide the default overlay when using this. Customize the team names and
+                    logos in Spark's Settings->Overlay window.
+                </li>
+                <li>
+                    <a href="/combat_overlay">
+                        <h3>/combat_overlay</h3>
+                    </a>
+                    A simple combat overlay showing player name plates for both teams. Displays player names, numbers,
+                    possession status (glowing indicator), and stunned states.
+                    Perfect for OBS streaming.
+                </li>
+                <li>
+                    <h3>Combat Overlays</h3>
+                    Overlays specifically designed for Combat mode.
+                    <ul>
+                        <li>
+                            <a href="/combat_payload.html">
+                                <h3>/combat_payload.html</h3>
+                            </a>
+                            Team headers for Payload mode (no player nameplates).
+                        </li>
+                        <li>
+                            <a href="/combat_capturepoint.html">
+                                <h3>/combat_capturepoint.html</h3>
+                            </a>
+                            Team headers for Capture Point mode (no player nameplates).
+                        </li>
+                        <li>
+                            <a href="/combat_full_overlay.html">
+                                <h3>/combat_full_overlay.html</h3>
+                            </a>
+                            Full combat overlay with additional features.
+                        </li>
+                        <li>
+                            <a href="/combat_scoreboard.html">
+                                <h3>/combat_scoreboard.html</h3>
+                            </a>
+                            Combat scoreboard display.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <h3>Casting Overlays</h3>
+                    Overlays for casting and streaming.
+                    <ul>
+                        <li>
+                            <a href="/casters_simple.html">
+                                <h3>/casters_simple.html</h3>
+                            </a>
+                            Simple caster name and logo display. Configure via <a
+                                href="/overlays/caster_setup/">/overlays/caster_setup</a>.
+                        </li>
+                        <li>
+                            <a href="/countdown_timer.html">
+                                <h3>/countdown_timer.html</h3>
+                            </a>
+                            Countdown timer for stream breaks.
+                        </li>
+                        <li>
+                            <a href="/team_roster.html">
+                                <h3>/team_roster.html</h3>
+                            </a>
+                            Team roster display.
+                        </li>
+                        <li>
+                            <a href="/team_vs_team.html">
+                                <h3>/team_vs_team.html</h3>
+                            </a>
+                            Team vs team display.
+                        </li>
+                        <li>
+                            <a href="/stream_start_screen.html">
+                                <h3>/stream_start_screen.html</h3>
+                            </a>
+                            Stream starting soon screen.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="/speedometer/player">
+                        <h3>/speedometer/player</h3>
+                    </a>
+                    A simple speed reading overlay for the client player speed. The text is in white, so it won't
+                    immediately be visible in your browser.
+                </li>
+                <li>
+                    <a href="/speedometer/disc">
+                        <h3>/speedometer/disc</h3>
+                    </a>
+                    A simple speed reading overlay for the disc speed. The text is in white, so it won't immediately be
+                    visible in your browser.
+                </li>
+                <li>
+                    <a href="/speedometer/lone_echo_1">
+                        <h3>/speedometer/lone_echo_1</h3>
+                    </a>
+                    A simple speed reading overlay for the player speed in Lone Echo. The text is in white, so it won't
+                    immediately be visible in your browser.
+                </li>
+                <li>
+                    <a href="/speedometer/lone_echo_2">
+                        <h3>/speedometer/lone_echo_2</h3>
+                    </a>
+                    A simple speed reading overlay for the player speed in Lone Echo II. The text is in white, so it
+                    won't immediately be visible in your browser.
+                </li>
+                <li>
+                    <h3>Components</h3>
+                    Position these in OBS to create your own overlay layout.
+                    <ul>
+                        <li>
+                            <a href="/components/minimap">
+                                <h3>/components/minimap</h3>
+                            </a>
+                            565x174
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>
