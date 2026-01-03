@@ -54,8 +54,10 @@ namespace Spark
 						{
 							case "subscribe":
 								{
+									Console.WriteLine($"=== Subscribe request for: {parts[1]} ===");
 									if (Enum.TryParse(parts[1], out EventContainer.EventType type))
 									{
+										Console.WriteLine($"Successfully parsed EventType: {type}");
 										if (!subscriberMapping.ContainsKey(type))
 										{
 											subscriberMapping[type] = new List<IWebSocketConnection>();
@@ -66,6 +68,7 @@ namespace Spark
 											subscriberMapping[type].Add(socket);
 										}
 
+										Console.WriteLine($"Sending acknowledgment: {message}");
 										socket.Send(message);
 
 										// send back the current state if it's an event that requires it
@@ -76,6 +79,7 @@ namespace Spark
 									}
 									else
 									{
+										Console.WriteLine($"Failed to parse EventType: {parts[1]}");
 										socket.Send("failed:" + message);
 									}
 									break;
@@ -154,6 +158,31 @@ namespace Spark
 									catch (Exception ex)
 									{
 										Console.WriteLine($"Error setting overlay config: {ex.Message}");
+										socket.Send("failed:" + ex.Message);
+									}
+									break;
+								}
+							case "timer_control":
+								{
+									Console.WriteLine($"=== timer_control received: {parts[1]} ===");
+									try
+									{
+										string command = parts[1];
+
+										// Broadcast timer control command to all subscribers
+										var controlData = new Dictionary<string, object>
+										{
+											{ "command", command },
+											{ "timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }
+										};
+
+										Console.WriteLine($"Broadcasting timer_control: {JsonConvert.SerializeObject(controlData)}");
+										SendData(EventContainer.EventType.timer_control, controlData);
+										socket.Send("success:timer_control");
+									}
+									catch (Exception ex)
+									{
+										Console.WriteLine($"Error in timer_control: {ex.Message}");
 										socket.Send("failed:" + ex.Message);
 									}
 									break;
