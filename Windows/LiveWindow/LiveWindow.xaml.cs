@@ -284,6 +284,9 @@ namespace Spark
 				new MessageBox("Failed to load. Please report this to NtsFranz ( ╯□╰ ) (3645)").Show();
 			}
 
+			// Initialize Overlay Config UI
+			LoadOverlayConfigSettings();
+
 			//_ = CheckForAppUpdate();
 		}
 
@@ -588,11 +591,11 @@ namespace Spark
 						// show the button once the player hasn't been getting data for some time
 						float secondsUntilRejoiner = 1f;
 						if (!Program.InGame &&
-						    Program.lastFrame != null &&
-						    Program.lastFrame.private_match &&
-						    Program.lastFrame.GetAllPlayers(true).Count > 1 && // if we weren't the last
-						    DateTime.Compare(Program.lastDataTime.AddSeconds(secondsUntilRejoiner), DateTime.UtcNow) < 0 &&
-						    SparkSettings.instance.echoVRIP == "127.0.0.1")
+							Program.lastFrame != null &&
+							Program.lastFrame.private_match &&
+							Program.lastFrame.GetAllPlayers(true).Count > 1 && // if we weren't the last
+							DateTime.Compare(Program.lastDataTime.AddSeconds(secondsUntilRejoiner), DateTime.UtcNow) < 0 &&
+							SparkSettings.instance.echoVRIP == "127.0.0.1")
 						{
 							rejoinButton.Visibility = Visibility.Visible;
 						}
@@ -1979,10 +1982,10 @@ namespace Spark
 			bool firstHost = true;
 
 			while (Program.running &&
-			       Program.InGame &&
-			       Program.lastFrame != null &&
-			       Program.lastFrame.teams != null &&
-			       Program.hostedAtlasSessionId == Program.lastFrame.sessionid)
+				   Program.InGame &&
+				   Program.lastFrame != null &&
+				   Program.lastFrame.teams != null &&
+				   Program.hostedAtlasSessionId == Program.lastFrame.sessionid)
 			{
 				bool diff =
 					firstHost ||
@@ -2184,6 +2187,11 @@ namespace Spark
 		private void OpenOverlays(object sender, RoutedEventArgs e)
 		{
 			OpenWebpage("http://localhost:6724/");
+		}
+
+		private void OpenCombatOverlays(object sender, RoutedEventArgs e)
+		{
+			OpenWebpage("http://localhost:6724/combat_overlays.html");
 		}
 
 		private static void OpenWebpage(string url)
@@ -2460,5 +2468,325 @@ namespace Spark
 		{
 			await LaunchInstallReplayViewer(true);
 		}
+
+		#region Overlay Config Tab
+
+		private bool overlayConfigInit = false;
+
+		private void LoadOverlayConfigSettings()
+		{
+			overlayConfigInit = false;
+
+			// Some older overlay config flows could accidentally nest caster prefs under a "caster_prefs" key.
+			// Flatten it so reads/writes (including timer settings) are consistent.
+			_ = GetFlattenedCasterPrefs();
+
+			// Load team source
+			OverlayTeamSourceComboBox.SelectedIndex = SparkSettings.instance.overlaysTeamSource;
+			UpdateOverlayManualInputVisibility();
+
+			// Load team names and logos
+			OverlayManualTeamNameOrange.Text = SparkSettings.instance.overlaysManualTeamNameOrange;
+			OverlayManualTeamLogoOrange.Text = SparkSettings.instance.overlaysManualTeamLogoOrange;
+			OverlayManualTeamNameBlue.Text = SparkSettings.instance.overlaysManualTeamNameBlue;
+			OverlayManualTeamLogoBlue.Text = SparkSettings.instance.overlaysManualTeamLogoBlue;
+
+			// Load caster settings
+			var casterPrefs = GetFlattenedCasterPrefs();
+			if (casterPrefs.ContainsKey("num_casters"))
+			{
+				int numCasters = Convert.ToInt32(casterPrefs["num_casters"]);
+				OverlayNumCastersComboBox.SelectedIndex = numCasters - 1;
+			}
+			else
+			{
+				OverlayNumCastersComboBox.SelectedIndex = 0;
+			}
+
+			OverlayCaster1Name.Text = GetOverlayCasterValue("caster1_name");
+			OverlayCaster1Logo.Text = GetOverlayCasterValue("caster1_logo");
+			OverlayCaster2Name.Text = GetOverlayCasterValue("caster2_name");
+			OverlayCaster2Logo.Text = GetOverlayCasterValue("caster2_logo");
+			OverlayCaster3Name.Text = GetOverlayCasterValue("caster3_name");
+			OverlayCaster3Logo.Text = GetOverlayCasterValue("caster3_logo");
+			OverlayCaster4Name.Text = GetOverlayCasterValue("caster4_name");
+			OverlayCaster4Logo.Text = GetOverlayCasterValue("caster4_logo");
+
+			UpdateOverlayCasterPanelVisibility();
+
+			// Load visibility settings
+			OverlayMinimapCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.minimap;
+			OverlayCompactMinimapCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.compact_minimap;
+			OverlayPlayerRostersCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.player_rosters;
+			OverlayMainBannerCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.main_banner;
+			OverlayNeutralJoustsCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.neutral_jousts;
+			OverlayDefensiveJoustsCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.defensive_jousts;
+			OverlayEventLogCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.event_log;
+			OverlayPlayspaceCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.playspace;
+			OverlayPlayerSpeedCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.player_speed;
+			OverlayDiscSpeedCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.disc_speed;
+			OverlayShowTeamLogosCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.show_team_logos;
+			OverlayShowTeamNamesCheckbox.IsChecked = SparkSettings.instance.configurableOverlaySettings.show_team_names;
+
+			// Load timer settings
+			try
+			{
+				if (casterPrefs.TryGetValue("timer_duration", out object timerDurationObj))
+				{
+					int totalSeconds = Convert.ToInt32(timerDurationObj);
+					if (totalSeconds < 0) totalSeconds = 0;
+					int minutes = totalSeconds / 60;
+					int seconds = totalSeconds % 60;
+					OverlayTimerMinutes.Text = minutes.ToString();
+					OverlayTimerSeconds.Text = seconds.ToString();
+				}
+
+				if (casterPrefs.TryGetValue("timer_title", out object timerTitleObj))
+				{
+					OverlayTimerTitle.Text = timerTitleObj?.ToString() ?? "";
+				}
+
+				if (casterPrefs.TryGetValue("timer_auto_start", out object autoStartObj))
+				{
+					OverlayTimerAutoStart.IsChecked = Convert.ToBoolean(autoStartObj);
+				}
+			}
+			catch
+			{
+				// ignore timer load issues; leave defaults
+			}
+
+			overlayConfigInit = true;
+		}
+
+		private (int minutes, int seconds, int totalSeconds) ReadAndNormalizeTimerInputs(bool updateTextBoxes)
+		{
+			int minutes = 0;
+			int seconds = 0;
+			int.TryParse(OverlayTimerMinutes.Text, out minutes);
+			int.TryParse(OverlayTimerSeconds.Text, out seconds);
+
+			minutes = Math.Clamp(minutes, 0, 59);
+			seconds = Math.Clamp(seconds, 0, 59);
+
+			if (updateTextBoxes)
+			{
+				OverlayTimerMinutes.Text = minutes.ToString();
+				OverlayTimerSeconds.Text = seconds.ToString();
+			}
+
+			int totalSeconds = (minutes * 60) + seconds;
+			return (minutes, seconds, totalSeconds);
+		}
+
+		private void BroadcastTimerControl(string command)
+		{
+			try
+			{
+				var controlData = new Dictionary<string, object>
+				{
+					{ "command", command },
+					{ "timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }
+				};
+
+				Program.webSocketMan?.SendData(EventContainer.EventType.timer_control, controlData);
+			}
+			catch (Exception ex)
+			{
+				LogRow(LogType.Error, $"Error broadcasting timer_control '{command}': {ex.Message}");
+			}
+		}
+
+		private Dictionary<string, object> GetFlattenedCasterPrefs()
+		{
+			var prefs = SparkSettings.instance.casterPrefs;
+			if (prefs == null)
+			{
+				prefs = new Dictionary<string, object>();
+				SparkSettings.instance.casterPrefs = prefs;
+				return prefs;
+			}
+
+			bool changed = false;
+			while (prefs.TryGetValue("caster_prefs", out object nestedObj))
+			{
+				Dictionary<string, object> nested = null;
+				switch (nestedObj)
+				{
+					case Dictionary<string, object> dict:
+						nested = dict;
+						break;
+					case JObject jObj:
+						nested = jObj.ToObject<Dictionary<string, object>>();
+						break;
+					case JToken jToken:
+						nested = jToken.ToObject<Dictionary<string, object>>();
+						break;
+				}
+
+				if (nested == null) break;
+
+				prefs.Remove("caster_prefs");
+				foreach (var kvp in nested)
+				{
+					prefs[kvp.Key] = kvp.Value;
+				}
+				changed = true;
+			}
+
+			if (changed)
+			{
+				SparkSettings.instance.Save();
+			}
+
+			return prefs;
+		}
+
+		private string GetOverlayCasterValue(string key)
+		{
+			var prefs = GetFlattenedCasterPrefs();
+			if (prefs.ContainsKey(key))
+			{
+				return prefs[key]?.ToString() ?? "";
+			}
+			return "";
+		}
+
+		private void UpdateOverlayManualInputVisibility()
+		{
+			OverlayManualInputSettings.Visibility = SparkSettings.instance.overlaysTeamSource == 0 ? Visibility.Visible : Visibility.Collapsed;
+		}
+
+		private void UpdateOverlayCasterPanelVisibility()
+		{
+			int numCasters = OverlayNumCastersComboBox.SelectedIndex + 1;
+
+			OverlayCaster1Panel.Visibility = numCasters >= 1 ? Visibility.Visible : Visibility.Collapsed;
+			OverlayCaster2Panel.Visibility = numCasters >= 2 ? Visibility.Visible : Visibility.Collapsed;
+			OverlayCaster3Panel.Visibility = numCasters >= 3 ? Visibility.Visible : Visibility.Collapsed;
+			OverlayCaster4Panel.Visibility = numCasters >= 4 ? Visibility.Visible : Visibility.Collapsed;
+		}
+
+		private void OverlayTeamSourceChanged(object sender, SelectionChangedEventArgs e)
+		{
+			if (!overlayConfigInit) return;
+
+			SparkSettings.instance.overlaysTeamSource = OverlayTeamSourceComboBox.SelectedIndex;
+			UpdateOverlayManualInputVisibility();
+			SparkSettings.instance.Save();
+			Program.OverlayConfigChanged?.Invoke();
+		}
+
+		private void OverlayTeamNameChanged(object sender, TextChangedEventArgs e)
+		{
+			if (!overlayConfigInit) return;
+
+			SparkSettings.instance.overlaysManualTeamNameOrange = OverlayManualTeamNameOrange.Text;
+			SparkSettings.instance.overlaysManualTeamLogoOrange = OverlayManualTeamLogoOrange.Text;
+			SparkSettings.instance.overlaysManualTeamNameBlue = OverlayManualTeamNameBlue.Text;
+			SparkSettings.instance.overlaysManualTeamLogoBlue = OverlayManualTeamLogoBlue.Text;
+
+			SparkSettings.instance.Save();
+			Program.OverlayConfigChanged?.Invoke();
+		}
+
+		private void OverlayNumCastersChanged(object sender, SelectionChangedEventArgs e)
+		{
+			if (!overlayConfigInit) return;
+
+			int numCasters = OverlayNumCastersComboBox.SelectedIndex + 1;
+			GetFlattenedCasterPrefs()["num_casters"] = numCasters;
+
+			UpdateOverlayCasterPanelVisibility();
+			SaveOverlayCasterSettings();
+		}
+
+		private void OverlayCasterChanged(object sender, TextChangedEventArgs e)
+		{
+			if (!overlayConfigInit) return;
+			SaveOverlayCasterSettings();
+		}
+
+		private void SaveOverlayCasterSettings()
+		{
+			var prefs = GetFlattenedCasterPrefs();
+			prefs["caster1_name"] = OverlayCaster1Name.Text;
+			prefs["caster1_logo"] = OverlayCaster1Logo.Text;
+			prefs["caster2_name"] = OverlayCaster2Name.Text;
+			prefs["caster2_logo"] = OverlayCaster2Logo.Text;
+			prefs["caster3_name"] = OverlayCaster3Name.Text;
+			prefs["caster3_logo"] = OverlayCaster3Logo.Text;
+			prefs["caster4_name"] = OverlayCaster4Name.Text;
+			prefs["caster4_logo"] = OverlayCaster4Logo.Text;
+
+			SparkSettings.instance.Save();
+			Program.OverlayConfigChanged?.Invoke();
+		}
+
+		private void OverlayVisibilityChanged(object sender, RoutedEventArgs e)
+		{
+			if (!overlayConfigInit) return;
+
+			SparkSettings.instance.configurableOverlaySettings.minimap = OverlayMinimapCheckbox.IsChecked ?? false;
+			SparkSettings.instance.configurableOverlaySettings.compact_minimap = OverlayCompactMinimapCheckbox.IsChecked ?? false;
+			SparkSettings.instance.configurableOverlaySettings.player_rosters = OverlayPlayerRostersCheckbox.IsChecked ?? false;
+			SparkSettings.instance.configurableOverlaySettings.main_banner = OverlayMainBannerCheckbox.IsChecked ?? false;
+			SparkSettings.instance.configurableOverlaySettings.neutral_jousts = OverlayNeutralJoustsCheckbox.IsChecked ?? false;
+			SparkSettings.instance.configurableOverlaySettings.defensive_jousts = OverlayDefensiveJoustsCheckbox.IsChecked ?? false;
+			SparkSettings.instance.configurableOverlaySettings.event_log = OverlayEventLogCheckbox.IsChecked ?? false;
+			SparkSettings.instance.configurableOverlaySettings.playspace = OverlayPlayspaceCheckbox.IsChecked ?? false;
+			SparkSettings.instance.configurableOverlaySettings.player_speed = OverlayPlayerSpeedCheckbox.IsChecked ?? false;
+			SparkSettings.instance.configurableOverlaySettings.disc_speed = OverlayDiscSpeedCheckbox.IsChecked ?? false;
+			SparkSettings.instance.configurableOverlaySettings.show_team_logos = OverlayShowTeamLogosCheckbox.IsChecked ?? false;
+			SparkSettings.instance.configurableOverlaySettings.show_team_names = OverlayShowTeamNamesCheckbox.IsChecked ?? false;
+
+			SparkSettings.instance.Save();
+			Program.OverlayConfigChanged?.Invoke();
+		}
+
+		private void OverlaySwapTeamSettingsClicked(object sender, RoutedEventArgs e)
+		{
+			// Swap orange and blue team names and logos
+			string tempName = OverlayManualTeamNameOrange.Text;
+			OverlayManualTeamNameOrange.Text = OverlayManualTeamNameBlue.Text;
+			OverlayManualTeamNameBlue.Text = tempName;
+
+			string tempLogo = OverlayManualTeamLogoOrange.Text;
+			OverlayManualTeamLogoOrange.Text = OverlayManualTeamLogoBlue.Text;
+			OverlayManualTeamLogoBlue.Text = tempLogo;
+
+			// Save changes
+			OverlayTeamNameChanged(null, null);
+		}
+
+		private void OverlayTimerSaveClicked(object sender, RoutedEventArgs e)
+		{
+			if (!overlayConfigInit) return;
+			var (_, _, totalSeconds) = ReadAndNormalizeTimerInputs(updateTextBoxes: true);
+			var prefs = GetFlattenedCasterPrefs();
+			prefs["timer_duration"] = totalSeconds;
+			prefs["timer_auto_start"] = OverlayTimerAutoStart.IsChecked ?? false;
+			prefs["timer_title"] = OverlayTimerTitle.Text;
+			SparkSettings.instance.Save();
+			Program.OverlayConfigChanged?.Invoke();
+			LogRow(LogType.Info, $"Overlay timer saved: duration={totalSeconds}s auto_start={OverlayTimerAutoStart.IsChecked ?? false} title='{OverlayTimerTitle.Text}'");
+		}
+
+		private void OverlayTimerStartClicked(object sender, RoutedEventArgs e)
+		{
+			BroadcastTimerControl("start");
+		}
+
+		private void OverlayTimerResetClicked(object sender, RoutedEventArgs e)
+		{
+			BroadcastTimerControl("reset");
+		}
+
+		private void OverlayTimerPauseClicked(object sender, RoutedEventArgs e)
+		{
+			BroadcastTimerControl("pause");
+		}
+
+		#endregion
 	}
 }

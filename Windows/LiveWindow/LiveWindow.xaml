@@ -523,6 +523,143 @@
 					<l:CreateServerControls/>
 				</TabItem>
 
+				<TabItem x:Name="OverlayConfigTab" FontSize="14" Padding="10,0,10,0" Visibility="Visible">
+					<TabItem.Header>
+						<StackPanel Orientation="Horizontal">
+							<Label Content="Overlay Config"/>
+							<Image Source="/img/cog.png" Height="16"/>
+						</StackPanel>
+					</TabItem.Header>
+					<ScrollViewer VerticalScrollBarVisibility="Auto">
+						<StackPanel Margin="10,0,10,10">
+							<Label Content="Spark Overlays Configuration" FontSize="16" Margin="5,5,5,5" />
+							<TextBlock TextWrapping="Wrap" Background="{DynamicResource ControlBrightDefaultBackground}" Padding="10,10,10,10" Margin="10,0,10,0">
+								<Run Text="Configure overlay settings for casting and streaming. These settings control team names, logos, and caster information displayed in overlays."/>
+							</TextBlock>
+
+							<GroupBox Header="Team Names &amp; Logos" Margin="0,20,0,0">
+								<StackPanel>
+									<Label Content="Team Name/Logo Source" Margin="20,0,0,0"/>
+									<ComboBox x:Name="OverlayTeamSourceComboBox" Margin="20,0,20,10" SelectionChanged="OverlayTeamSourceChanged">
+										<ComboBoxItem>Manual Team Entry</ComboBoxItem>
+										<ComboBoxItem>Automatic VRML Teams</ComboBoxItem>
+									</ComboBox>
+
+									<Grid x:Name="OverlayManualInputSettings" Visibility="Visible" Margin="20,0,20,0">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="*"/>
+											<ColumnDefinition Width="50"/>
+											<ColumnDefinition Width="*"/>
+										</Grid.ColumnDefinitions>
+										<Grid.RowDefinitions>
+											<RowDefinition Height="30" />
+											<RowDefinition Height="*" />
+										</Grid.RowDefinitions>
+
+										<Label Content="Orange Team" Grid.Column="0" HorizontalContentAlignment="Center" Background="{DynamicResource ContainerBackground}"/>
+										<Button x:Name="OverlaySwapTeamSettingsButton" Grid.Column="1" Grid.Row="0" Width="40" Height="30" Margin="0,0,0,0" Click="OverlaySwapTeamSettingsClicked" ToolTip="Swap Orange/Blue team names and logos">
+                                            <Image Source="/img/swap-horizontal-bold.png" Width="20" Height="20"/>
+                                        </Button>
+										<Label Content="Blue Team" Grid.Column="2" HorizontalContentAlignment="Center" Background="{DynamicResource ContainerBackground}"/>
+
+										<StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
+											<Label Content="Team Name"/>
+											<TextBox x:Name="OverlayManualTeamNameOrange" TextChanged="OverlayTeamNameChanged"/>
+											<Label Content="Team Logo (URL)"/>
+											<TextBox x:Name="OverlayManualTeamLogoOrange" TextChanged="OverlayTeamNameChanged"/>
+										</StackPanel>
+										<StackPanel Grid.Row="1" Grid.Column="2">
+											<Label Content="Team Name"/>
+											<TextBox x:Name="OverlayManualTeamNameBlue" TextChanged="OverlayTeamNameChanged"/>
+											<Label  Content="Team Logo (URL)"/>
+											<TextBox x:Name="OverlayManualTeamLogoBlue" TextChanged="OverlayTeamNameChanged"/>
+										</StackPanel>
+									</Grid>
+								</StackPanel>
+							</GroupBox>
+
+							<GroupBox Header="Caster Settings" Margin="0,20,0,0">
+								<StackPanel>
+									<Label Content="Number of Casters" Margin="20,0,0,0"/>
+									<ComboBox x:Name="OverlayNumCastersComboBox" Margin="20,0,20,10" SelectionChanged="OverlayNumCastersChanged">
+										<ComboBoxItem>1</ComboBoxItem>
+										<ComboBoxItem>2</ComboBoxItem>
+										<ComboBoxItem>3</ComboBoxItem>
+										<ComboBoxItem>4</ComboBoxItem>
+									</ComboBox>
+
+									<StackPanel x:Name="OverlayCaster1Panel" Margin="20,10,20,0">
+										<Label Content="Caster 1" FontWeight="Bold"/>
+										<Label Content="Name"/>
+										<TextBox x:Name="OverlayCaster1Name" TextChanged="OverlayCasterChanged"/>
+										<Label Content="Logo (URL)"/>
+										<TextBox x:Name="OverlayCaster1Logo" TextChanged="OverlayCasterChanged"/>
+									</StackPanel>
+
+									<StackPanel x:Name="OverlayCaster2Panel" Margin="20,10,20,0">
+										<Label Content="Caster 2" FontWeight="Bold"/>
+										<Label Content="Name"/>
+										<TextBox x:Name="OverlayCaster2Name" TextChanged="OverlayCasterChanged"/>
+										<Label Content="Logo (URL)"/>
+										<TextBox x:Name="OverlayCaster2Logo" TextChanged="OverlayCasterChanged"/>
+									</StackPanel>
+
+									<StackPanel x:Name="OverlayCaster3Panel" Margin="20,10,20,0">
+										<Label Content="Caster 3" FontWeight="Bold"/>
+										<Label Content="Name"/>
+										<TextBox x:Name="OverlayCaster3Name" TextChanged="OverlayCasterChanged"/>
+										<Label Content="Logo (URL)"/>
+										<TextBox x:Name="OverlayCaster3Logo" TextChanged="OverlayCasterChanged"/>
+									</StackPanel>
+
+									<StackPanel x:Name="OverlayCaster4Panel" Margin="20,10,20,0">
+										<Label Content="Caster 4" FontWeight="Bold"/>
+										<Label Content="Name"/>
+										<TextBox x:Name="OverlayCaster4Name" TextChanged="OverlayCasterChanged"/>
+										<Label Content="Logo (URL)"/>
+										<TextBox x:Name="OverlayCaster4Logo" TextChanged="OverlayCasterChanged"/>
+									</StackPanel>
+								</StackPanel>
+							</GroupBox>
+
+							<GroupBox Header="Overlay Visibility" Margin="0,20,0,0">
+								<StackPanel Margin="20,0,20,10">
+									<CheckBox x:Name="OverlayMinimapCheckbox" Content="Minimap" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+									<CheckBox x:Name="OverlayCompactMinimapCheckbox" Content="Compact Minimap" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+									<CheckBox x:Name="OverlayPlayerRostersCheckbox" Content="Player Rosters" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+									<CheckBox x:Name="OverlayMainBannerCheckbox" Content="Main Banner" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+									<CheckBox x:Name="OverlayNeutralJoustsCheckbox" Content="Neutral Jousts" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+									<CheckBox x:Name="OverlayDefensiveJoustsCheckbox" Content="Defensive Jousts" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+									<CheckBox x:Name="OverlayEventLogCheckbox" Content="Event Log" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+									<CheckBox x:Name="OverlayPlayspaceCheckbox" Content="Playspace" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+									<CheckBox x:Name="OverlayPlayerSpeedCheckbox" Content="Player Speed" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+									<CheckBox x:Name="OverlayDiscSpeedCheckbox" Content="Disc Speed" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+									<CheckBox x:Name="OverlayShowTeamLogosCheckbox" Content="Show Team Logos" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+									<CheckBox x:Name="OverlayShowTeamNamesCheckbox" Content="Show Team Names" Checked="OverlayVisibilityChanged" Unchecked="OverlayVisibilityChanged"/>
+								</StackPanel>
+							</GroupBox>
+
+							<GroupBox Header="Countdown Timer Config" Margin="0,20,0,0">
+								<StackPanel>
+									<Label Content="Timer Duration (minutes)" Margin="20,0,0,0"/>
+									<TextBox x:Name="OverlayTimerMinutes" Width="60" Margin="20,0,20,10"/>
+									<Label Content="Timer Duration (seconds)" Margin="20,0,0,0"/>
+									<TextBox x:Name="OverlayTimerSeconds" Width="60" Margin="20,0,20,10"/>
+									<Label Content="Timer Title" Margin="20,0,0,0"/>
+									<TextBox x:Name="OverlayTimerTitle" Width="200" Margin="20,0,20,10"/>
+									<CheckBox x:Name="OverlayTimerAutoStart" Content="Auto Start Timer" Margin="20,0,20,10"/>
+									<StackPanel Orientation="Horizontal" Margin="20,10,20,10">
+										<Button x:Name="OverlayTimerSaveButton" Content="Save Timer Config" Width="140" Margin="0,0,10,0" Click="OverlayTimerSaveClicked"/>
+										<Button x:Name="OverlayTimerStartButton" Content="Start Timer" Width="110" Margin="0,0,10,0" Click="OverlayTimerStartClicked"/>
+										<Button x:Name="OverlayTimerResetButton" Content="Reset Timer" Width="110" Margin="0,0,10,0" Click="OverlayTimerResetClicked"/>
+										<Button x:Name="OverlayTimerPauseButton" Content="Pause/Resume" Width="120" Click="OverlayTimerPauseClicked"/>
+									</StackPanel>
+								</StackPanel>
+							</GroupBox>
+						</StackPanel>
+					</ScrollViewer>
+				</TabItem>
+
 			</TabControl>
 			<StackPanel Height="48" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,4" Grid.Row="1">
 				<Button x:Name="rejoinButton" Content="{x:Static p:Resources.Rejoin}" Width="110" Background="#FF6E2F2F" VerticalAlignment="Stretch" Margin="4,4,4,5" Click="RejoinClicked" ToolTip="{x:Static p:Resources.rejoin_tooltip}" Visibility="Collapsed"/>
@@ -591,6 +728,12 @@
 							<Image Source="/img/cog.png" Margin="5,5,5,5"/>
 						</Button>
 					</StackPanel>
+					<Button x:Name="CombatOverlaysButton" Height="40" Margin="4,4,4,4" Click="OpenCombatOverlays" Visibility="Visible">
+						<StackPanel Orientation="Horizontal">
+							<TextBlock Text="Combat &amp; Casting" VerticalAlignment="Center"></TextBlock>
+							<Image Source="/img/text-box-outline.png" Margin="8,8,0,8"></Image>
+						</StackPanel>
+					</Button>
 					<Button x:Name="ShowClickableOverlayButton" Visibility="Visible" Height="40" Click="showOverlay_Click" Margin="4,4,4,4">
 						<StackPanel>
 							<Label x:Name="ClickableOverlayLabel" Content="Spectator Overlay" Margin="0,-6,0,0"/>
